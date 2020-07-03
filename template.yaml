@@ -41,7 +41,7 @@ Resources:
 Outputs:
   LastLinkEndpoint:
     Description: "API Gateway endpoint URL for stage for LastLink Function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/link/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/link"
   LastLinkARN:
     Description: "LastLink Handler Lambda Function ARN"
     Value: !GetAtt LastLinkFunction.Arn
