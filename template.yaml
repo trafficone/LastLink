@@ -39,12 +39,9 @@ Resources:
             Method: post
 
 Outputs:
-  TwilioResponderApi:
+  LastLinkEndpoint:
     Description: "API Gateway endpoint URL for stage for LastLink Function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  TwilioFunction:
-    Description: "Twilio Handler Lambda Function ARN"
-    Value: !GetAtt HandleTwilioFunction.Arn
-  TwilioFunctionIamRole:
-    Description: "Implicit IAM Role created for function"
-    Value: !GetAtt HandleTwilioFunctionRole.Arn
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/link/"
+  LastLinkARN:
+    Description: "LastLink Handler Lambda Function ARN"
+    Value: !GetAtt LastLinkFunction.Arn
