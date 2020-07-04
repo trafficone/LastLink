@@ -42,7 +42,7 @@ def params_from_headers(headers, body, queryString):
 def get_latest_link(linkId):
     latest_link = table.query(
         KeyConditionExpression=Key("LinkId").eq(linkId),
-        ScanIndexForward=True,
+        ScanIndexForward=False,
         Limit=1)
     logger.debug(latest_link)
     if len(latest_link.get('Items', [])) == 0:
