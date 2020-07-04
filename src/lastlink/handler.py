@@ -2,26 +2,22 @@
 import logging
 import json
 import os
-import boto3
-from boto3.dynamodb.conditions import Key
 from urllib.parse import parse_qs
+from lastlink.link import Link
 
 logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 if os.environ.get('Environment', 'Test') == 'Prod':
     logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
-
-ddb = boto3.resource('dynamodb')
-table = ddb.Table('LastLinkTable')
 
 
 def params_from_headers(headers, body, queryString):
-    # Handles content both as JSON and WWW form
+    # Handles content both as JSON and WWW form - also queryString
     logger.debug(headers)
     logger.debug(body)
     cf = "Content-Type"
+    parameters = {}
     if cf not in headers:
-        parameters = {}
         cf = cf.lower()
         if cf not in headers and queryString is None:
             logger.error("Invalid Event: Payload has no Content-Type header")
@@ -39,47 +35,25 @@ def params_from_headers(headers, body, queryString):
     return parameters
 
 
-def get_latest_link(linkId):
-    latest_link = table.query(
-        KeyConditionExpression=Key("LinkId").eq(linkId),
-        ScanIndexForward=False,
-        Limit=1)
-    logger.debug(latest_link)
-    if len(latest_link.get('Items', [])) == 0:
-        raise Exception("Link ID %s Not Found" % linkId)
-    return latest_link['Items'][0]
-
-
-def set_latest_link(linkId, latest_link, newlink):
-    latest_index = latest_link['NodeIndex'] + 1
-    new_latest = {
-        'LinkId': linkId,
-        'NodeIndex': latest_index,
-        'Node': newlink
-    }
-    table.put_item(Item=new_latest)
-    return new_latest
-
-
 def lambda_handler(event, context):
     if "httpMethod" not in event or "headers" not in event:
         logger.error("Invalid Event Triggered: No HTTP Method and/or headers Found!")
-        # return server_error_reply("Invalid Resource")
         raise Exception("Invalid Resource")
     try:
         parameters = params_from_headers(event["headers"],
                                          event.get("body", None),
-                                         event.get('queryStringParameters',{}))
+                                         event.get('queryStringParameters', {}))
     except Exception as e:
-        # return server_error_reply(e)
         raise Exception(e)
     linkId = parameters.get('linkid', 'TEST')
-    link = get_latest_link(linkId)
+    link = Link(linkId)
     if event['httpMethod'] == 'POST':
         if 'newlink' not in parameters:
             raise Exception("NewLink not set")
         newlink = parameters['newlink']
-        link = set_latest_link(linkId, link, newlink)
+        link.set_latest_link(newlink)
+    elif link.latest_link is None:
+        raise Exception("Link ID %s Not Found")
     return {"statusCode": 200,
             "headers": {"Content-Type": "text/plain"},
             "body": link["Node"]}
